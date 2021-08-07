@@ -26,6 +26,10 @@ app.get('/notes', (req, res) =>
   res.sendFile(path.join(__dirname, '/public/notes.html'))
 );
 
+app.get('/api/notes', (req, res) =>
+  res.sendFile(path.join(__dirname, '/db/db.json'))
+);
+
 // POST Route for a new UX/UI tip
 app.post('/api/notes', (req, res) => {
   console.log(req.body);
@@ -39,11 +43,40 @@ app.post('/api/notes', (req, res) => {
       id: uuidv4(),
     };
 
-    readAndAppend(newNote, './db/db.json');
-    res.json(`Tip added successfully 🚀`);
+    fs.readFile('./db/db.json', 'utf8', (err, data) => {
+      if (err) {
+        console.error(err);
+      } else {
+        // Convert string into JSON object
+        const parsedNote = JSON.parse(data);
+
+        // Add a new review
+        parsedNote.push(newNote);
+
+        // Write updated reviews back to the file
+        fs.writeFile(
+          './db/db.json',
+          JSON.stringify(parsedNote, null, 4),
+          (writeErr) =>
+            writeErr
+              ? console.error(writeErr)
+              : console.info('Successfully updated reviews!')
+        );
+      }
+    });
+
+    const response = {
+      status: 'success',
+      body: newNote,
+    };
+
+    console.log(response);
+    res.json(response);
   } else {
-    res.error('Error in adding tip');
+    res.json('Error in posting review');
   }
+
+
 });
 
 
